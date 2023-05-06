@@ -35,10 +35,14 @@ long last_aq_print = 0;
 bool hb_led = false;
 
 // -- servo related
-Servo up;
-Servo down;
-uint16_t up_val;
-uint16_t down_val;
+Servo servo_left;
+Servo servo_left_backup;
+Servo servo_right;
+Servo servo_right_backup;
+uint16_t servo_left_pos = 0;
+uint16_t servo_right_pos = 0;
+uint8_t movement_stage = 0;
+long last_servo_movement = 0;
 
 
 void setup() {
@@ -63,6 +67,11 @@ void setup() {
   pinMode(CENTRAL_LED, OUTPUT);
   pinMode(WIND_SENSOR, INPUT);
   
+  servo_left.attach(SERVO1_PIN);
+  servo_left_backup.attach(SERVO2_PIN);
+  servo_right.attach(SERVO3_PIN);
+  servo_right_backup.attach(SERVO4_PIN);
+
 }
 
 void loop() {
@@ -71,6 +80,10 @@ void loop() {
 
   sensorUpdate();
 
+  servoMovements();
+
+  // -------------------------------------------
+  // -- logger update
 
   // Updating our logging sensors
   if(CONSOLE_DEBUG == true && millis()-last_print >= 1000) {
@@ -107,6 +120,10 @@ void loop() {
 
   logger.updateLogging();
 
+  // -------------------------------------------
+
+  // -------------------------------------------
+  // -- led update
 
   // heartbeat led (blue) = uc working
   uint16_t slice = millis() % 1000;
@@ -122,8 +139,9 @@ void loop() {
     digitalWrite(CENTRAL_LED, slice < 100 || (slice > 200 && slice < 300));
   }
 
+  // -------------------------------------------
+
 
 }
-
 
 
