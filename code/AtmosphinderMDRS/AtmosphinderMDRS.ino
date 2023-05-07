@@ -6,8 +6,11 @@
 #include <Adafruit_MS8607.h>
 #include <Adafruit_Sensor.h>
 #include <Servo.h>
+#include <Adafruit_NeoPixel.h>
+#include <Bounce2.h>
 
 #define CONSOLE_DEBUG true
+#define OUTDOORS true
 #define GPSSerial Serial4
 #define GPSECHO true
 
@@ -42,7 +45,20 @@ Servo servo_right_backup;
 uint16_t servo_left_pos = 0;
 uint16_t servo_right_pos = 0;
 uint8_t movement_stage = 0;
+long last_movement = 0;
 long last_servo_movement = 0;
+long MOVEMENT_TIME = 500;
+ 
+// -- neopixel related
+Adafruit_NeoPixel strip(LED_COUNT, NEOPIXEL_PIN, NEO_RGB + NEO_KHZ800);
+long firstPixelHueRB = 0;
+long last_rainbow = 0;
+long last_move_blink = 0;
+bool move_blink = false;
+
+// -- button related
+Bounce bounce = Bounce();
+int the_mode = 0;
 
 
 void setup() {
@@ -63,14 +79,33 @@ void setup() {
   pinMode(LED, OUTPUT);
   pinMode(HEARTBEAT_LED, OUTPUT);
   pinMode(AUX_LED, OUTPUT);
+  digitalWrite(LED, LOW);
+  
+  strip.begin();           // INITIALIZE NeoPixel strip object (REQUIRED)
+  strip.show();            // Turn OFF all pixels ASAP
+  if(OUTDOORS) {
+    strip.setBrightness(200); // Set BRIGHTNESS to about 1/5 (max = 255)
+  } else {
+    strip.setBrightness(5); // Set BRIGHTNESS to about 1/5 (max = 255)
+  }
 
   pinMode(CENTRAL_LED, OUTPUT);
   pinMode(WIND_SENSOR, INPUT);
+
+  bounce.attach(BUTTON_PIN, INPUT);
+  bounce.interval(5);
   
   servo_left.attach(SERVO1_PIN);
   servo_left_backup.attach(SERVO2_PIN);
   servo_right.attach(SERVO3_PIN);
   servo_right_backup.attach(SERVO4_PIN);
+
+  sailTrim(LEFT_HOME_POS, RIGHT_HOME_POS);
+
+  servo_left.detach();
+  servo_left_backup.detach();
+  servo_right.detach();
+  servo_right_backup.detach();
 
 }
 
@@ -80,7 +115,44 @@ void loop() {
 
   sensorUpdate();
 
-  servoMovements();
+  bounce.update();
+
+  if(bounce.changed()) {
+    int deboucedInput = bounce.read();
+    if (deboucedInput == LOW) {
+      movement_stage = 0;
+      
+      the_mode++;
+      if(the_mode > 3) the_mode = 0;
+
+      if(the_mode > 0) {
+        servo_left.attach(SERVO1_PIN);
+        servo_left_backup.attach(SERVO2_PIN);
+        servo_right.attach(SERVO3_PIN);
+        servo_right_backup.attach(SERVO4_PIN);
+      } else {
+        servo_left.detach();
+        servo_left_backup.detach();
+        servo_right.detach();
+        servo_right_backup.detach();
+      }
+
+    }
+  }
+
+  // the two main modes - servo test and blinky Lol
+  if(the_mode == 1) {
+    MOVEMENT_TIME = 500;
+    digitalWrite(LED, HIGH);
+    servoMovements();
+  } else if(the_mode == 0 || the_mode == 2) {
+    digitalWrite(LED, LOW);
+    rainbowNoDelay(5);
+  } else if(the_mode == 3) {
+    MOVEMENT_TIME = 15000;
+    digitalWrite(LED, HIGH);
+    servoMovements();
+  }
 
   // -------------------------------------------
   // -- logger update
@@ -92,6 +164,8 @@ void loop() {
   }
 
   logger.setLogData_t(LOG_TIME, now());
+
+  logger.setLogData_f(LOG_PRESSURE, pressure.pressure);
 
   //logger.setLogData_f(LOG_IMU_PITCH, compass_pitch);
   //logger.setLogData_f(LOG_IMU_ROLL, compass_roll);
