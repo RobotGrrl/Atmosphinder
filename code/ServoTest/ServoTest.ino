@@ -31,30 +31,40 @@ void setup() {
 
 void loop() {
   
-  servo1.write(0);
-  servo2.write(180);
+  // left
+  // 1700 = right
+  // 2100 = home
+  // 2700 = left
 
-  for(int pos=0; pos<180; pos++) {
-    //servo1.write(pos);
-    //servo2.write(pos);
-    servo3.write(pos);
-    servo4.write(pos);
-    servo5.write(pos);
-    servo6.write(pos);
-    Serial << pos << endl;
-    delay(15);
-  }
+  // right
+  // 2200 = home
+  // 2800 = left
+  // 1800 = right
 
-  for(int pos=180; pos>0; pos--) {
-    //servo1.write(pos);
-    //servo2.write(pos);
-    servo3.write(pos);
-    servo4.write(pos);
-    servo5.write(pos);
-    servo6.write(pos);
-    Serial << pos << endl;
-    delay(15);
-  }
+  //servo1.writeMicroseconds(1700); // left
+  servo3.writeMicroseconds(2800); // right
+
+  // for(int pos=0; pos<180; pos++) {
+  //   //servo1.write(pos);
+  //   //servo2.write(pos);
+  //   servo3.write(pos);
+  //   servo4.write(pos);
+  //   servo5.write(pos);
+  //   servo6.write(pos);
+  //   Serial << pos << endl;
+  //   delay(15);
+  // }
+
+  // for(int pos=180; pos>0; pos--) {
+  //   //servo1.write(pos);
+  //   //servo2.write(pos);
+  //   servo3.write(pos);
+  //   servo4.write(pos);
+  //   servo5.write(pos);
+  //   servo6.write(pos);
+  //   Serial << pos << endl;
+  //   delay(15);
+  // }
 
 }
 
