@@ -1,13 +1,12 @@
 void sensorUpdate() {
 
-  wind_sensor_val = analogRead(WIND_SENSOR);
-
   if(!read_sensors) return;
 
   batt_level = analogRead(BATT_LEVEL_PIN);
   current_sensor_val = analogRead(CURRENT_SENSOR);
+  wind_sensor_val = analogRead(WIND_SENSOR);
 
-  if(millis()-last_batt_level_print >= 500) {
+  if(millis()-last_batt_level_print >= 500 && DEBUG_SENSORS == true) {
     Serial << "batt level: " << batt_level << endl;
     Serial << "current sensor: " << current_sensor_val << endl;
     last_batt_level_print = millis();
@@ -17,7 +16,7 @@ void sensorUpdate() {
 
     ms8607.getEvent(&pressure, &temp, &humidity);
 
-    if(millis()-last_sensor_print >= 500) {
+    if(millis()-last_sensor_print >= 500 && DEBUG_SENSORS == true) {
       Serial << "pressure: " << pressure.pressure << " hPa" << endl;
       Serial << "humidity: " << humidity.relative_humidity << " %rH" << endl;
       Serial << "temperature: " << temp.temperature << " deg C" << endl;
@@ -37,13 +36,13 @@ void aqSensorUpdate() {
   // Serial5 is 9600 baud
   int bytes_available = Serial5.available();
   if(bytes_available > 50) {
-    Serial << "Updating AQ sensor..." << endl;
+    if(DEBUG_SENSORS == true) Serial << "Updating AQ sensor..." << endl;
     air_quality_data = Serial5.readString();
     air_quality_data.remove(air_quality_data.length()-2);
   }
   
   if(air_quality_data.length() > 0) {
-    if(millis()-last_aq_print >= 1000) {
+    if(millis()-last_aq_print >= 1000 && DEBUG_SENSORS == true) {
       Serial << air_quality_data << endl;
       last_aq_print = millis();
     }

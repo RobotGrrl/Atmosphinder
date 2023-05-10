@@ -61,6 +61,11 @@ void pixyUpdate() {
 
   }
 
+  if(millis()-last_blink >= 100) {
+    digitalWrite(LED, !digitalRead(LED));
+    last_blink = millis();
+  }
+
 }
 
 

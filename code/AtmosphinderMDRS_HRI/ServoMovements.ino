@@ -103,7 +103,7 @@ void servoWindMovementsSynchronised() {
     movement_stage++;
     if(movement_stage > 1) movement_stage = 0;
     logger.setLogData_u16(LOG_SERVO_POS_END, movement_stage);
-    Serial << "\r\n\r\n----->Movement stage: " << movement_stage << endl;
+    if(DEBUG_SERVO) Serial << "\tMovement stage: " << movement_stage << endl;
     last_movement = millis();
   }
 
@@ -134,7 +134,7 @@ void servoWindMovementsOpposite() {
     movement_stage++;
     if(movement_stage > 1) movement_stage = 0;
     logger.setLogData_u16(LOG_SERVO_POS_END, movement_stage);
-    Serial << "\r\n\r\n----->Movement stage: " << movement_stage << endl;
+    if(DEBUG_SERVO) Serial << "\tMovement stage: " << movement_stage << endl;
     last_movement = millis();
   }
 

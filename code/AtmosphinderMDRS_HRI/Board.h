@@ -21,15 +21,29 @@
 #define RIGHT_LEFT_POS    2800
 #define RIGHT_RIGHT_POS   1800
 
-#define WIND_THRESH1      80
-#define WIND_THRESH2      100
-#define WIND_THRESH3      120
-#define WIND_THRESH4      130
+#define WIND_THRESH1      140
+#define WIND_THRESH2      150
+#define WIND_THRESH3      170
+#define WIND_THRESH4      180
 
-#define WIND_LED_THRESH1      8
-#define WIND_LED_THRESH2      10
-#define WIND_LED_THRESH3      12
-#define WIND_LED_THRESH4      13
+#define WIND_LED_THRESH1      5
+#define WIND_LED_THRESH2      7
+#define WIND_LED_THRESH3      10
+#define WIND_LED_THRESH4      15
+
+// #define WIND_THRESH1      80
+// #define WIND_THRESH2      100
+// #define WIND_THRESH3      120
+// #define WIND_THRESH4      130
+
+// #define WIND_LED_THRESH1      8
+// #define WIND_LED_THRESH2      10
+// #define WIND_LED_THRESH3      12
+// #define WIND_LED_THRESH4      13
+
+
+
+
 
 
 

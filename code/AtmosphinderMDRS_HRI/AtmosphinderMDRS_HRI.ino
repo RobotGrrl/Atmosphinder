@@ -10,14 +10,20 @@
 #include <Bounce2.h>
 #include "PixyUART.h"
 
+long last_blink = 0;
+
 // -- debugs
 #define CONSOLE_DEBUG true
+#define DEBUG_GPS false
+#define DEBUG_SENSORS false
 #define DEBUG_PIXY true
+#define DEBUG_WIND_AUTON true
+#define DEBUG_SERVO false
 #define OUTDOORS false
 
 // -- gps related --
 #define GPSSerial Serial4
-#define GPSECHO true
+#define GPSECHO false
 Adafruit_GPS GPS(&GPSSerial);
 uint32_t timer = millis();
 long last_print = 0;
@@ -65,7 +71,7 @@ uint32_t purple_color = strip.Color(148, 0, 211);
 uint32_t white_color = strip.Color(255, 255, 255);
 uint32_t off_color = strip.Color(0, 0, 0);
 
-// -- button related / state machine related
+// -- state machine related
 Bounce bounce = Bounce();
 int MODE = 0;
 bool mode_blink = true;
@@ -198,6 +204,7 @@ void loop() {
           servos_attached = false;
         break;
         case 7: // wind auton test
+          if(CONSOLE_DEBUG) Serial << "windAuton1()" << endl;
           servos_attached = true;
           movement_stage = 0;
         break;
@@ -205,6 +212,7 @@ void loop() {
           servos_attached = false;
         break;
         case 9: // wind auton test
+          if(CONSOLE_DEBUG) Serial << "windAuton2()" << endl;
           servos_attached = true;
           movement_stage = 0;
         break;
@@ -280,6 +288,7 @@ void loop() {
       showMode(6);
     break;
     case 7: // wind auton test
+      digitalWrite(LED, HIGH);
       windAuton1();
     break;
     case 8: // waiting - wind auton test
@@ -287,6 +296,7 @@ void loop() {
       showMode(8);
     break;
     case 9: // wind auton test
+      digitalWrite(LED, HIGH);
       windAuton2();
     break;
     case 10: // waiting - camera test
@@ -305,7 +315,7 @@ void loop() {
     break;
     case 14: // party mode
       rainbowNoDelay(3);
-      MOVEMENT_TIME = 100;
+      MOVEMENT_TIME = 500;
       digitalWrite(LED, HIGH);
       servoMovements();
     break;
@@ -316,7 +326,7 @@ void loop() {
   // -- logger update
 
   // Updating our logging sensors
-  if(CONSOLE_DEBUG == true && millis()-last_print >= 1000) {
+  if(millis()-last_print >= 1000 && DEBUG_SENSORS == true) {
     Serial << "Updating logging sensors..." << endl;
     last_print = millis();
   }
@@ -375,97 +385,5 @@ void loop() {
 
 
 }
-
-
-void windLEDs() {
-
-  bool windLEDs_debug = false;
-
-  uint16_t temp_wind_sensor_val = wind_sensor_val;
-  if(wind_sensor_val > 170) temp_wind_sensor_val = 170;
-  int leds_active = map(temp_wind_sensor_val, 0, 170, 1, 17);
-  
-  for(int i=LED_COUNT; i>4; i--) {
-    
-    if(i < WIND_LED_THRESH1) {
-      strip.setPixelColor(i, blue_color);
-    } else if(i >= WIND_LED_THRESH1 && i < WIND_LED_THRESH2) {
-      strip.setPixelColor(i, green_color);
-    } else if(i >= WIND_LED_THRESH2 && i < WIND_LED_THRESH3) {
-      strip.setPixelColor(i, yellow_color);
-    } else if(i >= WIND_LED_THRESH3 && i <= WIND_LED_THRESH4) {
-      strip.setPixelColor(i, orange_color);
-    } else if(i > WIND_LED_THRESH4) {
-      strip.setPixelColor(i, red_color);
-    }
-
-    if(i > leds_active) {
-      strip.setPixelColor(i, off_color);
-    }
-  }
-  strip.show();
-
-}
-
-
-
-void windAuton1() {
-
-  if(wind_sensor_val < WIND_THRESH1) {
-    // do nothing - go to home pos
-    uint16_t left_pos = LEFT_HOME_POS;
-    uint16_t right_pos = RIGHT_HOME_POS;
-    sailTrim(left_pos, right_pos);
-    neopixelChange(left_pos, right_pos, false);
-
-  } else if(wind_sensor_val >= WIND_THRESH1 && wind_sensor_val < WIND_THRESH3) {
-    // turns, synchronised dirs
-    MOVEMENT_TIME = 250;
-    servoWindMovementsSynchronised();
-
-  } else if(wind_sensor_val >= WIND_THRESH3) {
-    // turns, opposite dirs
-    MOVEMENT_TIME = 250;
-    servoWindMovementsOpposite();
-  }
-
-}
-
-
-void windAuton2() {
-
-  if(wind_sensor_val < WIND_THRESH1) {
-    // do nothing
-    uint16_t left_pos = LEFT_HOME_POS;
-    uint16_t right_pos = RIGHT_HOME_POS;
-    sailTrim(left_pos, right_pos);
-    neopixelChange(left_pos, right_pos, false);
-
-  } else if(wind_sensor_val >= WIND_THRESH1 && wind_sensor_val < WIND_THRESH2) {
-    // gently turn, synchronised dirs
-    MOVEMENT_TIME = 2000;
-    servoWindMovementsSynchronised();
-
-  } else if(wind_sensor_val >= WIND_THRESH2 && wind_sensor_val < WIND_THRESH3) {
-    // faster turns, opposite dirs
-    MOVEMENT_TIME = 500;
-    servoWindMovementsSynchronised();
-
-  } else if(wind_sensor_val >= WIND_THRESH3 && wind_sensor_val < WIND_THRESH4) {
-    // gently turns, opposite dirs
-    MOVEMENT_TIME = 2000;
-    servoWindMovementsOpposite();
-
-  } else if(wind_sensor_val >= WIND_THRESH4) {
-    // faster turns, opposite dirs
-    MOVEMENT_TIME = 500;
-    servoWindMovementsOpposite();
-
-  }
-
-}
-
-
-
 
 
