@@ -8,20 +8,22 @@
 #include <Servo.h>
 #include <Adafruit_NeoPixel.h>
 #include <Bounce2.h>
+#include "PixyUART.h"
 
+// -- debugs
 #define CONSOLE_DEBUG true
+#define DEBUG_PIXY true
 #define OUTDOORS false
-#define GPSSerial Serial4
-#define GPSECHO true
-
-Adafruit_GPS GPS(&GPSSerial);
-AtmosphinderLogger logger = AtmosphinderLogger();
 
 // -- gps related --
+#define GPSSerial Serial4
+#define GPSECHO true
+Adafruit_GPS GPS(&GPSSerial);
 uint32_t timer = millis();
 long last_print = 0;
 
 // -- sensor related --
+AtmosphinderLogger logger = AtmosphinderLogger();
 bool read_sensors = false;
 Adafruit_MS8607 ms8607;
 sensors_event_t temp, pressure, humidity;
@@ -33,9 +35,6 @@ uint16_t current_sensor_val = 0;
 uint16_t wind_sensor_val;
 String air_quality_data = "";
 long last_aq_print = 0;
-
-// -- led
-bool hb_led = false;
 
 // -- servo related
 Servo servo_left;
@@ -71,6 +70,36 @@ Bounce bounce = Bounce();
 int MODE = 0;
 bool mode_blink = true;
 long last_mode_blink = 0;
+
+// -- pixy related
+#define SIZE_THRESH 15
+PixyUART pixy;
+uint16_t blocks;
+char buf[32];
+long last_pixy_print = 0;
+
+struct card {
+  uint8_t index;
+  uint16_t signature;
+  uint16_t width;
+  uint16_t height;
+  uint16_t x;
+  uint16_t y;
+};
+
+struct card good_blocks[20];
+uint8_t good_blocks_count = 0;
+uint16_t sig_combo = 0;
+uint16_t sig_combo_prev = 0;
+long last_combo_time = 0;
+uint16_t combo_count = 0;
+bool combo_detected = false;
+
+struct card card_left;
+struct card card_right;
+
+uint8_t CAMERA_AUTON_MODE = 0;
+// --
 
 
 void setup() {
@@ -118,6 +147,8 @@ void setup() {
   servo_left_backup.detach();
   servo_right.detach();
   servo_right_backup.detach();
+
+  pixyBegin();
 
 }
 
@@ -182,12 +213,14 @@ void loop() {
         break;
         case 11: // camera test
           servos_attached = true;
+          movement_stage = 0;
         break;
         case 12: // waiting - camera test
           servos_attached = false;
         break;
         case 13: // camera test
           servos_attached = true;
+          movement_stage = 0;
         break; 
         case 14: // party mode
           servos_attached = true;
@@ -260,13 +293,15 @@ void loop() {
       showMode(10);
     break;
     case 11: // camera test
-      
+      CAMERA_AUTON_MODE = 0;
+      pixyUpdate();
     break;
     case 12: // waiting - camera test
       showMode(12);
     break;
     case 13: // camera test
-
+      CAMERA_AUTON_MODE = 1;
+      pixyUpdate();
     break;
     case 14: // party mode
       rainbowNoDelay(3);
